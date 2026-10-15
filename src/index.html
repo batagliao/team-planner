@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team allocation</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="ro">
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Team allocation</h1>
+      <p class="period" id="period"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="toolbar">
+      <button class="btn icon" id="prev" aria-label="Previous month">‹</button>
+      <button class="btn" id="todayBtn">Today</button>
+      <button class="btn icon" id="next" aria-label="Next month">›</button>
+      <div class="seg" role="group" aria-label="Months shown">
+        <button data-m="1" aria-pressed="true">1 month</button>
+        <button data-m="2" aria-pressed="false">2</button>
+        <button data-m="3" aria-pressed="false">3</button>
+      </div>
+      <button class="btn" id="projBtn">Projects</button>
+      <button class="btn" id="importBtn" title="Replace the plan with a JSON file">Import</button>
+      <button class="btn" id="exportBtn" title="Save the plan as a JSON file">Export</button>
+      <button class="btn primary" id="addPerson">Add person</button>
+      <span class="status" id="status" aria-live="polite">Loading…</span>
+    </div>
+  </header>
+  <div class="legend" id="legend"></div>
+  <div class="scroller" id="scroller"><div class="board" id="board"></div></div>
+  <p class="foot" id="foot">Drag on an empty part of a row to book someone. Drag a bar to move it, drag its edges to change dates, or drop it on another person. Use the handle beside a name to reorder people. Striped bars are part-time bookings; a red mark under a row means more than 100% that day.</p>
+</div>
+
+<dialog id="allocDlg">
+  <form method="dialog" id="allocForm">
+    <h2 id="allocTitle">Booking</h2>
+    <label class="f">Project<select id="aProject" required></select></label>
+    <label class="f">Person<select id="aPerson" required></select></label>
+    <div class="two">
+      <label class="f">Start<input type="date" id="aStart" required></label>
+      <label class="f">End<input type="date" id="aEnd" required></label>
+    </div>
+    <label class="f">Time on this project
+      <span class="loadrow"><input type="range" id="aLoad" min="10" max="100" step="10"><output id="aLoadOut"></output></span>
+    </label>
+    <label class="f">Note<textarea id="aNote" placeholder="Optional"></textarea></label>
+    <p class="err" id="aErr"></p>
+    <div class="actions">
+      <button type="button" class="btn danger" id="aDelete">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="aCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="aSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="personDlg">
+  <form method="dialog" id="personForm">
+    <h2 id="personTitle">Person</h2>
+    <label class="f">Name<input type="text" id="pName" required maxlength="60" autocomplete="off"></label>
+    <label class="f">Role<input type="text" id="pRole" maxlength="60" placeholder="Optional" autocomplete="off"></label>
+    <p class="err" id="pErr"></p>
+    <div class="actions">
+      <button type="button" class="btn danger" id="pDelete">Remove</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="pCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="projDlg">
+  <form method="dialog" id="projForm">
+    <h2>Projects</h2>
+    <p class="err" id="projMsg" style="color:var(--muted)"></p>
+    <div class="plist" id="plist"></div>
+    <div class="actions">
+      <button type="button" class="btn" id="addProj">Add project</button>
+      <span class="spacer"></span>
+      <button type="submit" class="btn primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

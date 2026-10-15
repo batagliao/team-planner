@@ -1,0 +1,14 @@
+{
+  "name": "team-allocation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Team allocation planner (Tauri desktop app). npm is optional; you can also use cargo-tauri directly.",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
