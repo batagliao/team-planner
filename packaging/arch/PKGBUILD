@@ -1,0 +1,43 @@
+# Maintainer: Bata <lucasbatagliao@connectly.ai>
+#
+# Packages the binary that CI (or a local build) already compiled. Nothing is
+# downloaded: source=() and package() copies from the repo checkout. Build the
+# binary first, from the repo root:
+#   cd src-tauri && cargo build --release --features tauri/custom-protocol
+# then run makepkg from this folder. Without custom-protocol the binary looks
+# for a dev server instead of its bundled UI.
+
+pkgname=team-allocation
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Plan who works on what, and when."
+arch=('x86_64')
+url="https://github.com/batagliao/team-planner"
+license=('custom')
+depends=('webkit2gtk-4.1' 'gtk3')
+source=()
+sha256sums=()
+
+package() {
+  local root="$startdir/../.."
+
+  install -Dm755 "$root/src-tauri/target/release/team-allocation" \
+    "$pkgdir/usr/bin/team-allocation"
+  install -Dm644 "$root/src-tauri/icons/128x128.png" \
+    "$pkgdir/usr/share/icons/hicolor/128x128/apps/team-allocation.png"
+  install -Dm644 "$root/src-tauri/icons/128x128@2x.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/team-allocation.png"
+
+  cat > "$srcdir/team-allocation.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Team Allocation
+Comment=Plan who works on what, and when.
+Exec=team-allocation
+Icon=team-allocation
+Terminal=false
+Categories=Office;ProjectManagement;
+EOF
+  install -Dm644 "$srcdir/team-allocation.desktop" \
+    "$pkgdir/usr/share/applications/team-allocation.desktop"
+}

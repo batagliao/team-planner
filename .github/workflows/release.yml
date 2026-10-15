@@ -75,3 +75,38 @@ jobs:
           name: installers-${{ matrix.os }}
           path: src-tauri/target/**/release/bundle/**/*.{dmg,msi,exe,deb,rpm,AppImage}
           if-no-files-found: error
+
+  # Arch isn't a Tauri bundle target, so this job compiles in an Arch container and packages with makepkg.
+  arch:
+    name: Linux (Arch package)
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build binary and package with makepkg
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work archlinux:latest bash -eu -c '
+            pacman -Syu --noconfirm base-devel rustup webkit2gtk-4.1 gtk3 librsvg xdotool openssl
+            # rust-toolchain.toml pins 1.90.0. rustup reads it and installs that version.
+            rustup show
+            cd src-tauri
+            cargo build --release --features tauri/custom-protocol
+            cd ../packaging/arch
+            useradd -m builder
+            chown builder /work/packaging/arch
+            runuser -u builder -- env HOME=/home/builder makepkg --noconfirm -f
+          '
+
+      - name: Upload Arch package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-arch
+          path: packaging/arch/*.pkg.tar.zst
+          if-no-files-found: error
+
+      - name: Attach to draft release (tags only)
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" packaging/arch/*.pkg.tar.zst --clobber
