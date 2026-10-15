@@ -1,0 +1,77 @@
+name: Build
+
+# Every run builds all three platforms and uploads the installers as workflow artifacts.
+# Pushing a tag like v1.0.0 also creates a draft GitHub Release with the installers attached.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (universal)
+            os: macos-latest
+            args: --target universal-apple-darwin
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - name: Linux
+            # Built on 22.04 so the binaries run on older distros too (older glibc).
+            os: ubuntu-22.04
+            args: ""
+            rust-targets: ""
+          - name: Windows
+            os: windows-latest
+            args: ""
+            rust-targets: ""
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      # Same version as rust-toolchain.toml. rustup reads that file too, so this just makes the install explicit.
+      - uses: dtolnay/rust-toolchain@1.90.0
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspace: src-tauri
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tauri CLI
+        run: npm install
+
+      - name: Build and (for tags) create a draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: Team Allocation ${{ github.ref_name }}
+          releaseDraft: true
+          args: ${{ matrix.args }}
+
+      - name: Upload installers as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: src-tauri/target/**/release/bundle/**/*.{dmg,msi,exe,deb,rpm,AppImage}
+          if-no-files-found: error
